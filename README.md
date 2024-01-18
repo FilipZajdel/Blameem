@@ -1,6 +1,6 @@
-# codeowlers README
+# Codeowlers README
 
-This is the README for your extension "codeowlers". After writing up a brief description, we recommend including the following sections.
+This is the README for your extension "Codeowlers". After writing up a brief description, we recommend including the following sections.
 
 ## Features
 

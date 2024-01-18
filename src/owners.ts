@@ -1,20 +1,16 @@
+
 import * as vscode from "vscode";
+import * as path from "path";
+import * as fs from "fs";
+import OwnersIf from "./models";
 
-const path = require("node:path");
-const fs = require("fs");
-
-interface FileOwners {
-  maintainers: Array<string>;
-  collaborators: Array<string>;
-}
-
-class FileMaintainers {
-  owners: Map<string, FileOwners>;
+class FileOwners {
+  owners: Map<string, OwnersIf>;
   root: string;
 
   constructor(maintainersFilePath: string) {
     if (fs.existsSync(maintainersFilePath)) {
-      // Load the owners and maintainers from a file
+      // Load the collaborators and maintainers from a file
       this.owners = new Map();
       this.root = "";
     } else {
@@ -64,9 +60,9 @@ class FileMaintainers {
     }
   }
 
-  getMaintainers(filepathAbs: string): FileOwners | undefined {
+  getMaintainers(filepathAbs: string): OwnersIf {
     if (!filepathAbs.startsWith(this.root)) {
-      return undefined;
+      return { collaborators: [], maintainers: []};
     }
 
     while (filepathAbs !== this.root) {
@@ -78,7 +74,7 @@ class FileMaintainers {
       filepathAbs = path.parse(filepathAbs).dir;
     }
 
-    return undefined;
+    return { collaborators: [], maintainers: []};
   }
 
   hasMaintainers(filepathAbs: string): boolean {
@@ -86,4 +82,4 @@ class FileMaintainers {
   }
 }
 
-export const fileMaintainers = new FileMaintainers("");
+export const fileOwners = new FileOwners("");
