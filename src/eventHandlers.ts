@@ -11,8 +11,12 @@ async function updateCurrentOwners(filePath: string | undefined) {
   }
 }
 
-export function activate() {
-  updateCurrentOwners(vscode.window.activeTextEditor.document.fileName);
+export async function activate() {
+  await fileOwners.load(vscode.Uri.file("/home/filipzajdel/zephyrproject/zephyr/MAINTAINERS.yml"));
+
+  if (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.fileName) {
+    updateCurrentOwners(vscode.window.activeTextEditor.document.fileName);
+  }
 
   vscode.window.onDidChangeActiveTextEditor(event => {
     if (event && event.document) {

@@ -2,27 +2,69 @@
 import * as vscode from "vscode";
 import OwnersIf from "./models";
 
+class OwnersTooltip {
+    private statusBarItem: vscode.StatusBarItem;
+
+    constructor (statusBarItem: vscode.StatusBarItem) {
+        this.statusBarItem = statusBarItem;
+        this.statusBarItem.tooltip = new vscode.MarkdownString();
+        this.statusBarItem.tooltip.supportHtml = true;
+    }
+
+    set collaborators(collaborators: string[]) {
+        if (collaborators.length === 0) {
+            return;
+        }
+
+        this.statusBarItem.tooltip!.value = "## Collaborators:";
+        this.statusBarItem.tooltip!.appendText("\n");
+
+        for (let link of collaborators.map((nickname) => `https://github.com/${nickname}`)) {
+            this.statusBarItem.tooltip!.appendMarkdown(` * ${link}\n`);
+        }
+    }
+
+    set maintainers(maintainers: string[]) {
+        if (maintainers.length === 0) {
+            return;
+        }
+
+        this.statusBarItem.tooltip!.appendMarkdown("## Maintainers:");
+        this.statusBarItem.tooltip!.appendText("\n");
+
+        for (let link of maintainers.map((nickname) => `https://github.com/${nickname}`)) {
+            this.statusBarItem.tooltip!.appendMarkdown(` * ${link}\n`);
+        }
+    }
+
+    clear() {
+        if (!this.statusBarItem) return;
+
+        this.statusBarItem.tooltip!.value = "";
+    }
+}
+
 export class View {
     statusBarItem: vscode.StatusBarItem | undefined = undefined;
-    tooltipMd: string = "";
+    tooltip: OwnersTooltip;
 
-    constructor() {}
+    constructor (size: number = 100) {
+        this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, size);
+        this.statusBarItem.text = "$(mark-github)";
+        this.tooltip = new OwnersTooltip(this.statusBarItem);
+    }
 
-    async update(owners: OwnersIf) {
+    update(owners: OwnersIf) {
         if (!this.statusBarItem) return;
 
         if (owners.maintainers.length > 0 || owners.collaborators.length > 0) {
-            this.statusBarItem.tooltip = owners.maintainers.toString() + owners.collaborators.toString();
+            this.tooltip.clear();
+            this.tooltip.collaborators = owners.collaborators;
+            this.tooltip.maintainers = owners.maintainers;
             this.statusBarItem.show();
         } else {
             this.statusBarItem.hide();
         }
-    }
-
-    async activate(size: number = 100) {
-        this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, size);
-        this.statusBarItem.text = "$(mark-github)";
-        this.statusBarItem.tooltip = "Maintained";
     }
 }
 
