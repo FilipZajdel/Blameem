@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2024 Nordic Semiconductor ASA
+ */
 
 import * as vscode from "vscode";
 import * as eventHandlers from "./eventHandlers";

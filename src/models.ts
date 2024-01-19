@@ -1,6 +1,8 @@
+/*
+ * Copyright (c) 2024 Nordic Semiconductor ASA
+ */
 
-
-export interface OwnersIf {
+export interface FileParticipants {
   maintainers: Array<string>;
   collaborators: Array<string>;
 }

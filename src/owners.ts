@@ -1,12 +1,16 @@
+/*
+ * Copyright (c) 2024 Nordic Semiconductor ASA
+ */
+
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import * as yaml from "yaml";
 
-import { OwnersIf } from "./models";
+import { FileParticipants } from "./models";
 
 class FileOwners {
-  owners: Map<string, OwnersIf> = new Map();
+  owners: Map<string, FileParticipants> = new Map();
   root: string = "";
 
   async loadYaml(ymlData: string) {
@@ -36,25 +40,25 @@ class FileOwners {
   }
 
   async load(ownersUri: vscode.Uri,
-    callback: (err: NodeJS.ErrnoException | null) => void) {
+    onLoad: (err: NodeJS.ErrnoException | null) => void) {
     fs.lstat(ownersUri.path, (err, stats) => {
       if (err) {
-        callback(err);
+        onLoad(err);
       } else {
-        fs.readFile(ownersUri.path, (err, buffer) => {
+        fs.readFile(ownersUri.path, async (err, buffer) => {
           if (err) {
-            callback(err);
+            onLoad(err);
           } else {
             this.loadYaml(buffer.toString());
             this.root = path.parse(ownersUri.path).dir;
-            callback(err);
+            onLoad(err);
           }
         });
       }
     });
   }
 
-  getMaintainers(filepathAbs: string): OwnersIf {
+  getMaintainers(filepathAbs: string): FileParticipants {
     if (this.root === "" || !filepathAbs.startsWith(this.root)) {
       return { collaborators: [], maintainers: [] };
     }

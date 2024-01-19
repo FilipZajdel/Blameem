@@ -1,6 +1,9 @@
+/*
+ * Copyright (c) 2024 Nordic Semiconductor ASA
+ */
 
 import * as vscode from "vscode";
-import { OwnersIf } from "./models";
+import { FileParticipants } from "./models";
 
 class OwnersTooltip {
     private statusBarItem: vscode.StatusBarItem;
@@ -56,7 +59,7 @@ export class View {
         this.tooltip = new OwnersTooltip(this.statusBarItem);
     }
 
-    update(owners: OwnersIf) {
+    update(owners: FileParticipants) {
         if (!this.statusBarItem) {
             return;
         }

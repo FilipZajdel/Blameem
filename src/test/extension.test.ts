@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2024 Nordic Semiconductor ASA
+ */
+
 import * as assert from 'assert';
 
 // You can import and use all API from the 'vscode' module
