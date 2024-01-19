@@ -14,7 +14,16 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": []
+    "configuration" :{
+      "title": "Codeowlers",
+      "properties": {
+        "codeowlers.maintainersSource" : {
+          "type" : "string",
+          "default" : "MAINTAINERS.yml",
+          "description" : "The name of a file that specifies maintainers and collaborators of a file or a directory."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

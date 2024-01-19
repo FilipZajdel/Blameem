@@ -1,11 +1,11 @@
 
 import * as vscode from "vscode";
-import OwnersIf from "./models";
+import { OwnersIf } from "./models";
 
 class OwnersTooltip {
     private statusBarItem: vscode.StatusBarItem;
 
-    constructor (statusBarItem: vscode.StatusBarItem) {
+    constructor(statusBarItem: vscode.StatusBarItem) {
         this.statusBarItem = statusBarItem;
         this.statusBarItem.tooltip = new vscode.MarkdownString();
         this.statusBarItem.tooltip.supportHtml = true;
@@ -38,7 +38,9 @@ class OwnersTooltip {
     }
 
     clear() {
-        if (!this.statusBarItem) return;
+        if (!this.statusBarItem) {
+            return;
+        }
 
         this.statusBarItem.tooltip!.value = "";
     }
@@ -48,14 +50,16 @@ export class View {
     statusBarItem: vscode.StatusBarItem | undefined = undefined;
     tooltip: OwnersTooltip;
 
-    constructor (size: number = 100) {
+    constructor(size: number = 100) {
         this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, size);
         this.statusBarItem.text = "$(mark-github)";
         this.tooltip = new OwnersTooltip(this.statusBarItem);
     }
 
     update(owners: OwnersIf) {
-        if (!this.statusBarItem) return;
+        if (!this.statusBarItem) {
+            return;
+        }
 
         if (owners.maintainers.length > 0 || owners.collaborators.length > 0) {
             this.tooltip.clear();
