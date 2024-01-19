@@ -3,7 +3,7 @@ import * as path from "path";
 
 import { fileOwners } from "./owners";
 import { view } from "./view";
-import { CodeowlersConfiguration } from "./models";
+import { BlameemConfiguration } from "./models";
 
 function updateCurrentOwners(filePath: string | undefined) {
   if (filePath) {
@@ -13,18 +13,18 @@ function updateCurrentOwners(filePath: string | undefined) {
 }
 
 export async function activate() {
-  const configuration = vscode.workspace.getConfiguration("codeowlers") as CodeowlersConfiguration;
+  const configuration = vscode.workspace.getConfiguration("blameem") as BlameemConfiguration;
 
-  const maintainersFiles = await vscode.workspace.findFiles(configuration.maintainersSource);
+  const maintainersFiles = await vscode.workspace.findFiles(configuration.participantsSource);
 
-  vscode.workspace.findFiles(configuration.maintainersSource)
+  vscode.workspace.findFiles(configuration.participantsSource)
     .then(async (files: vscode.Uri[]) => {
       // @TODO: decide what to do with other results, currently we're using the first one,
       // which - in most cases - is the only returned.
       if (files.length > 0) {
         fileOwners.load(files[0], async (err) => {
           if (err) {
-            console.error(`Failed to load ${configuration.maintainersSource}, reason: ${err}`);
+            console.error(`Failed to load ${configuration.participantsSource}, reason: ${err}`);
           } else {
 
             if (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.fileName) {
@@ -40,10 +40,10 @@ export async function activate() {
           }
         });
       } else {
-        console.error(`Failed to load ${configuration.maintainersSource}`);
+        console.error(`Failed to load ${configuration.participantsSource}`);
       }
 
     }, (reason) => {
-      console.error(`Failed to load ${configuration.maintainersSource}, reason ${reason}`);
+      console.error(`Failed to load ${configuration.participantsSource}, reason ${reason}`);
     });
 }

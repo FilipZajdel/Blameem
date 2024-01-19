@@ -5,6 +5,6 @@ export interface OwnersIf {
   collaborators: Array<string>;
 }
 
-export interface CodeowlersConfiguration {
-  maintainersSource: string;
+export interface BlameemConfiguration {
+  participantsSource: string;
 }

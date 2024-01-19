@@ -1,7 +1,7 @@
 {
-  "name": "codeowlers",
-  "displayName": "Codeowlers",
-  "description": "Show the owner(s) of currently open file.",
+  "name": "blameem",
+  "displayName": "Blame'em",
+  "description": "This extension shows you who to blame for the bugs in a currently viewed file",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.85.0"
@@ -15,11 +15,11 @@
   "main": "./out/extension.js",
   "contributes": {
     "configuration" :{
-      "title": "Codeowlers",
+      "title": "Blameem",
       "properties": {
-        "codeowlers.maintainersSource" : {
+        "blameem.participantsSource" : {
           "type" : "string",
-          "default" : "MAINTAINERS.yml",
+          "default" : "*/**/MAINTAINERS.yml",
           "description" : "The name of a file that specifies maintainers and collaborators of a file or a directory."
         }
       }
