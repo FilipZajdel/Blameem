@@ -19,12 +19,16 @@ class OwnersTooltip {
             return;
         }
 
-        this.statusBarItem.tooltip!.value = "## Collaborators:";
-        this.statusBarItem.tooltip!.appendText("\n");
+        let newTooltip = new vscode.MarkdownString();
+
+        newTooltip.value = "## Collaborators:";
+        newTooltip.appendText("\n");
 
         for (let link of collaborators.map((nickname) => `https://github.com/${nickname}`)) {
-            this.statusBarItem.tooltip!.appendMarkdown(` * ${link}\n`);
+            newTooltip.appendMarkdown(` * ${link}\n`);
         }
+
+        this.statusBarItem.tooltip = newTooltip;
     }
 
     set maintainers(maintainers: string[]) {
@@ -32,12 +36,17 @@ class OwnersTooltip {
             return;
         }
 
-        this.statusBarItem.tooltip!.appendMarkdown("## Maintainers:");
-        this.statusBarItem.tooltip!.appendText("\n");
+        let tooltip = (this.statusBarItem.tooltip instanceof vscode.MarkdownString) ?
+            this.statusBarItem.tooltip : new vscode.MarkdownString();
+
+        tooltip.appendMarkdown("## Maintainers:");
+        tooltip.appendText("\n");
 
         for (let link of maintainers.map((nickname) => `https://github.com/${nickname}`)) {
-            this.statusBarItem.tooltip!.appendMarkdown(` * ${link}\n`);
+            tooltip.appendMarkdown(` * ${link}\n`);
         }
+
+        this.statusBarItem.tooltip = tooltip;
     }
 
     clear() {
@@ -45,7 +54,7 @@ class OwnersTooltip {
             return;
         }
 
-        this.statusBarItem.tooltip!.value = "";
+        this.statusBarItem.tooltip = new vscode.MarkdownString();
     }
 }
 
