@@ -24,8 +24,4 @@ at the bottom. The maintainers and collaborators are loaded from the YAML file (
 
 * `blameem.participantsSource`: The maintainers file search pattern. Defaults to `*/**/MAINTAINERS.yml`
 
-## Known Issues
-
-* The extension reload is required to update the maintainers and collaborators.
-
 **Enjoy!**

@@ -59,31 +59,32 @@ class OwnersTooltip {
 }
 
 export class View {
-  _statusBarItem: vscode.StatusBarItem | undefined = undefined;
-  tooltip: OwnersTooltip;
+  private _statusBarItem: vscode.StatusBarItem | undefined = undefined;
+  private _tooltip: OwnersTooltip;
 
-  constructor(size: number = 300) {
+  constructor(size: number = 100) {
     this._statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
       size
     );
     this._statusBarItem.text = "$(mark-github)";
-    this.tooltip = new OwnersTooltip(this._statusBarItem);
+    this._tooltip = new OwnersTooltip(this._statusBarItem);
   }
 
-  update(owners: FileParticipants) {
+  update(owners: FileParticipants, label: string="$(mark-github)") {
     if (!this._statusBarItem) {
       return;
     }
 
     if (owners.maintainers.length > 0 || owners.collaborators.length > 0) {
-      this.tooltip.clear();
-      this.tooltip.participants = owners;
+      this._tooltip.clear();
+      this._tooltip.participants = owners;
       this._statusBarItem.show();
+      this._statusBarItem.text = label;
     } else {
       this._statusBarItem.hide();
     }
   }
 }
 
-export let view = new View();
+export const view = new View();

@@ -10,10 +10,10 @@ import * as yaml from "yaml";
 import { FileParticipants } from "./models";
 
 class FileOwners {
-  owners: Map<string, FileParticipants> = new Map();
-  root: string = "";
+  private _owners: Map<string, FileParticipants> = new Map();
+  private _root: string = "";
 
-  async loadYaml(ymlData: string) {
+  async loadFromYaml(ymlData: string) {
     const document = yaml.parseDocument(ymlData);
 
     if (!document.contents) {
@@ -26,11 +26,10 @@ class FileOwners {
 
       if (isMaintained) {
         files.items.forEach(file => {
-
           const collaborators = item.value.get("collaborators");
           const maintainers = item.value.get("maintainers");
 
-          this.owners.set(file.value, {
+          this._owners.set(file.value, {
             collaborators: collaborators ? collaborators.items : [],
             maintainers: maintainers ? maintainers.items : []
           });
@@ -39,8 +38,38 @@ class FileOwners {
     });
   }
 
-  async load(ownersUri: vscode.Uri,
-    onLoad: (err: NodeJS.ErrnoException | null) => void) {
+  async load(participantsSearchPath: string, onLoad: (err: NodeJS.ErrnoException | null) => void) {
+    vscode.workspace.findFiles(participantsSearchPath).then(
+      async (files: vscode.Uri[]) => {
+        // @TODO: decide what to do with other results, currently we're using the first one,
+        // which - in most cases - is the only returned.
+        if (files.length > 0) {
+          this.loadFromFile(files[0], async err => {
+            if (err) {
+              console.error(
+                `Failed to load ${participantsSearchPath}, reason: ${err}`
+              );
+            } else {
+              onLoad(err);
+              console.log(`Loaded maintainers from: ${files[0].toString()}`);
+            }
+          });
+        } else {
+          console.error(`Failed to load ${participantsSearchPath}`);
+        }
+      },
+      reason => {
+        console.error(
+          `Failed to load ${participantsSearchPath}, reason ${reason}`
+        );
+      }
+    );
+  }
+
+  private async loadFromFile(
+    ownersUri: vscode.Uri,
+    onLoad: (err: NodeJS.ErrnoException | null) => void
+  ) {
     fs.lstat(ownersUri.path, (err, stats) => {
       if (err) {
         onLoad(err);
@@ -49,8 +78,8 @@ class FileOwners {
           if (err) {
             onLoad(err);
           } else {
-            this.loadYaml(buffer.toString());
-            this.root = path.parse(ownersUri.path).dir;
+            this.loadFromYaml(buffer.toString());
+            this._root = path.parse(ownersUri.path).dir;
             onLoad(err);
           }
         });
@@ -58,30 +87,29 @@ class FileOwners {
     });
   }
 
-  getMaintainers(filepathAbs: string): FileParticipants {
-    if (this.root === "" || !filepathAbs.startsWith(this.root)) {
+  findMaintainers(filepathAbs: string): FileParticipants {
+    if (this._root === "" || !filepathAbs.startsWith(this._root)) {
       return { collaborators: [], maintainers: [] };
     }
 
-    let relative = path.relative(this.root, filepathAbs);
+    let relative = path.relative(this._root, filepathAbs);
 
-    while (filepathAbs !== this.root) {
-
-      const owners = this.owners.get(relative);
+    while (filepathAbs !== this._root) {
+      const owners = this._owners.get(relative);
 
       if (owners) {
         return owners;
       }
 
       filepathAbs = path.parse(filepathAbs).dir;
-      relative = path.relative(this.root, filepathAbs) + "/";
+      relative = path.relative(this._root, filepathAbs) + "/";
     }
 
     return { collaborators: [], maintainers: [] };
   }
 
   hasMaintainers(filepathAbs: string): boolean {
-    return this.getMaintainers(filepathAbs) !== undefined;
+    return this.findMaintainers(filepathAbs) !== undefined;
   }
 }
 
