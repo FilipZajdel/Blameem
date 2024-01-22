@@ -5,83 +5,85 @@
 import * as vscode from "vscode";
 import { FileParticipants } from "./models";
 
+class GithubParticipant {
+  private _repr: string;
+  private _avatarDimensions = { width: 25, height: 25 };
+
+  constructor(nickname: string) {
+    this._repr = `<img src=https://github.com/${nickname}.png width=${this
+      ._avatarDimensions.width} height=${this._avatarDimensions
+      .height}>  <a href=https://github.com/${nickname}>${nickname}</a>`;
+  }
+
+  asString(): string {
+    return this._repr;
+  }
+}
+
 class OwnersTooltip {
-    private statusBarItem: vscode.StatusBarItem;
+  private _statusBarItem: vscode.StatusBarItem;
 
-    constructor(statusBarItem: vscode.StatusBarItem) {
-        this.statusBarItem = statusBarItem;
-        this.statusBarItem.tooltip = new vscode.MarkdownString();
-        this.statusBarItem.tooltip.supportHtml = true;
+  constructor(_statusBarItem: vscode.StatusBarItem) {
+    this._statusBarItem = _statusBarItem;
+    this._statusBarItem.tooltip = new vscode.MarkdownString();
+    this._statusBarItem.tooltip.supportHtml = true;
+  }
+
+  set participants(participants: FileParticipants) {
+    const mapNick = (nickname: string) =>
+      new GithubParticipant(nickname).asString();
+    const maintainers = participants.maintainers.map(mapNick).join("\n\n");
+    const collaborators = participants.collaborators.map(mapNick).join("\n\n");
+
+    const mdTooltip = new vscode.MarkdownString();
+    mdTooltip.supportHtml = true;
+
+    if (collaborators.length > 0) {
+      mdTooltip.appendMarkdown(`### Maintainers\n${collaborators}\n`);
     }
 
-    set collaborators(collaborators: string[]) {
-        if (collaborators.length === 0) {
-            return;
-        }
-
-        let newTooltip = new vscode.MarkdownString();
-
-        newTooltip.value = "## Collaborators:";
-        newTooltip.appendText("\n");
-
-        for (let link of collaborators.map((nickname) => `https://github.com/${nickname}`)) {
-            newTooltip.appendMarkdown(` * ${link}\n`);
-        }
-
-        this.statusBarItem.tooltip = newTooltip;
+    if (maintainers.length > 0) {
+      mdTooltip.appendMarkdown(`### Collaborators\n${maintainers}\n`);
     }
 
-    set maintainers(maintainers: string[]) {
-        if (maintainers.length === 0) {
-            return;
-        }
+    this._statusBarItem.tooltip = mdTooltip;
+  }
 
-        let tooltip = (this.statusBarItem.tooltip instanceof vscode.MarkdownString) ?
-            this.statusBarItem.tooltip : new vscode.MarkdownString();
-
-        tooltip.appendMarkdown("## Maintainers:");
-        tooltip.appendText("\n");
-
-        for (let link of maintainers.map((nickname) => `https://github.com/${nickname}`)) {
-            tooltip.appendMarkdown(` * ${link}\n`);
-        }
-
-        this.statusBarItem.tooltip = tooltip;
+  clear() {
+    if (!this._statusBarItem) {
+      return;
     }
 
-    clear() {
-        if (!this.statusBarItem) {
-            return;
-        }
-
-        this.statusBarItem.tooltip = new vscode.MarkdownString();
-    }
+    this._statusBarItem.tooltip = new vscode.MarkdownString();
+  }
 }
 
 export class View {
-    statusBarItem: vscode.StatusBarItem | undefined = undefined;
-    tooltip: OwnersTooltip;
+  _statusBarItem: vscode.StatusBarItem | undefined = undefined;
+  tooltip: OwnersTooltip;
 
-    constructor(size: number = 100) {
-        this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, size);
-        this.statusBarItem.text = "$(mark-github)";
-        this.tooltip = new OwnersTooltip(this.statusBarItem);
+  constructor(size: number = 300) {
+    this._statusBarItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Right,
+      size
+    );
+    this._statusBarItem.text = "$(mark-github)";
+    this.tooltip = new OwnersTooltip(this._statusBarItem);
+  }
+
+  update(owners: FileParticipants) {
+    if (!this._statusBarItem) {
+      return;
     }
 
-    update(owners: FileParticipants) {
-        if (!this.statusBarItem) {
-            return;
-        }
-
-        if (owners.maintainers.length > 0 || owners.collaborators.length > 0) {
-            this.tooltip.clear();
-            this.tooltip.collaborators = owners.collaborators;
-            this.tooltip.maintainers = owners.maintainers;
-            this.statusBarItem.show();
-        } else {
-            this.statusBarItem.hide();
-        }
+    if (owners.maintainers.length > 0 || owners.collaborators.length > 0) {
+      this.tooltip.clear();
+      this.tooltip.participants = owners;
+      this._statusBarItem.show();
+    } else {
+      this._statusBarItem.hide();
     }
+  }
 }
 
 export let view = new View();
