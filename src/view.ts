@@ -10,13 +10,21 @@ class GithubParticipant {
   private _avatarDimensions = { width: 25, height: 25 };
 
   constructor(nickname: string) {
-    this._repr = `<img src=https://github.com/${nickname}.png width=${this
-      ._avatarDimensions.width} height=${this._avatarDimensions
-      .height}>  <a href=https://github.com/${nickname}>${nickname}</a>`;
+    this._repr =
+    `<a href=https://github.com/${nickname}>
+      <img src=https://github.com/${nickname}.png
+          width=${this._avatarDimensions.width}
+          height=${this._avatarDimensions.height}>
+      ${nickname}
+    </a>`;
   }
 
-  asString(): string {
+  toString(): string {
     return this._repr;
+  }
+
+  static map(nickname: string): string {
+    return new GithubParticipant(nickname).toString();
   }
 }
 
@@ -30,20 +38,18 @@ class OwnersTooltip {
   }
 
   set participants(participants: FileParticipants) {
-    const mapNick = (nickname: string) =>
-      new GithubParticipant(nickname).asString();
-    const maintainers = participants.maintainers.map(mapNick).join("\n\n");
-    const collaborators = participants.collaborators.map(mapNick).join("\n\n");
-
+    const maintainers = participants.maintainers.map(GithubParticipant.map).join("<br>");
+    const collaborators = participants.collaborators.map(GithubParticipant.map).join("<br>");
     const mdTooltip = new vscode.MarkdownString();
-    mdTooltip.supportHtml = true;
 
+    mdTooltip.supportHtml = true;
+  
+    if (maintainers.length > 0) {
+      mdTooltip.appendMarkdown(`### Collaborators\n${maintainers}\n\n`);
+    }
+    
     if (collaborators.length > 0) {
       mdTooltip.appendMarkdown(`### Maintainers\n${collaborators}\n`);
-    }
-
-    if (maintainers.length > 0) {
-      mdTooltip.appendMarkdown(`### Collaborators\n${maintainers}\n`);
     }
 
     this._statusBarItem.tooltip = mdTooltip;
@@ -71,7 +77,7 @@ export class View {
     this._tooltip = new OwnersTooltip(this._statusBarItem);
   }
 
-  update(owners: FileParticipants, label: string="$(mark-github)") {
+  update(owners: FileParticipants, label: string = "$(mark-github)") {
     if (!this._statusBarItem) {
       return;
     }

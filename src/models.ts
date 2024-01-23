@@ -9,6 +9,12 @@ export interface FileParticipants {
   collaborators: Array<string>;
 }
 
+export interface FileMaintainers extends FileParticipants {
+  files: Array<string>;
+  status?: string;
+  labels?: Array<string>;
+}
+
 export interface BlameemConfiguration extends WorkspaceConfiguration {
   participantsSource: string;
 }

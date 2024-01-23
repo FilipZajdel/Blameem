@@ -3,7 +3,6 @@
  */
 
 import * as vscode from "vscode";
-import * as path from "path";
 
 import { fileOwners } from "./owners";
 import { view } from "./view";
@@ -21,20 +20,6 @@ function updateCurrentOwners() {
   }
 }
 
-function onInitialOwnersLoad(err: NodeJS.ErrnoException | null) {
-  if (err) {
-    console.log("Failed to load maintainers file");
-  } else {
-    updateCurrentOwners();
-
-    vscode.window.onDidChangeActiveTextEditor(event => {
-      if (event && event.document) {
-        updateCurrentOwners();
-      }
-    });
-  }
-}
-
 async function onDidChangeConfiguration(
   event: vscode.ConfigurationChangeEvent
 ) {
@@ -42,13 +27,13 @@ async function onDidChangeConfiguration(
     const configuration = vscode.workspace.getConfiguration(
       "blameem"
     ) as BlameemConfiguration;
-    fileOwners.load(configuration.participantsSource, err => {
-      if (err) {
-        console.log(`Failed to found maintainers file: ${err}`);
-      } else {
+    fileOwners.load(configuration.participantsSource).then(
+      async () => {
         updateCurrentOwners();
-      }
-    });
+        console.log("Successfully updated maintainers");
+      },
+      (reason) => console.log(reason)
+    );
   }
 }
 
@@ -57,7 +42,18 @@ export async function activate() {
     "blameem"
   ) as BlameemConfiguration;
 
-  fileOwners.load(configuration.participantsSource, onInitialOwnersLoad);
+  fileOwners.load(configuration.participantsSource).then(
+    async () => {
+      console.log("Successfully loaded participants");
+      updateCurrentOwners();
+    },
+    reason => console.log(reason)
+  );
 
   vscode.workspace.onDidChangeConfiguration(onDidChangeConfiguration);
+  vscode.window.onDidChangeActiveTextEditor(event => {
+    if (event && event.document) {
+      updateCurrentOwners();
+    }
+  });
 }

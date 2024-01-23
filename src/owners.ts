@@ -6,85 +6,59 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import * as yaml from "yaml";
+import { promisify } from "util";
+import { FileParticipants, FileMaintainers } from "./models";
 
-import { FileParticipants } from "./models";
+const readFile = promisify(fs.readFile);
+const lstat = promisify(fs.lstat);
 
 class FileOwners {
   private _owners: Map<string, FileParticipants> = new Map();
   private _root: string = "";
 
-  async loadFromYaml(ymlData: string) {
-    const document = yaml.parseDocument(ymlData);
+  loadFromYaml(ymlData: string) {
+    const parsed = yaml.parse(ymlData) as FileMaintainers;
 
-    if (!document.contents) {
-      return;
-    }
-
-    document.contents.items.forEach(item => {
-      const files = item.value.get("files");
-      const isMaintained = item.value.get("status") === "maintained";
-
-      if (isMaintained) {
-        files.items.forEach(file => {
-          const collaborators = item.value.get("collaborators");
-          const maintainers = item.value.get("maintainers");
-
-          this._owners.set(file.value, {
-            collaborators: collaborators ? collaborators.items : [],
-            maintainers: maintainers ? maintainers.items : []
+    Object.values(parsed).forEach(
+      (entry: FileMaintainers) => {
+        if (entry.status === "maintained") {
+          entry.files.forEach(file => {
+            this._owners.set(
+              file, {
+              collaborators: entry.collaborators,
+              maintainers: entry.maintainers
+            });
           });
-        });
-      }
-    });
-  }
-
-  async load(participantsSearchPath: string, onLoad: (err: NodeJS.ErrnoException | null) => void) {
-    vscode.workspace.findFiles(participantsSearchPath).then(
-      async (files: vscode.Uri[]) => {
-        // @TODO: decide what to do with other results, currently we're using the first one,
-        // which - in most cases - is the only returned.
-        if (files.length > 0) {
-          this.loadFromFile(files[0], async err => {
-            if (err) {
-              console.error(
-                `Failed to load ${participantsSearchPath}, reason: ${err}`
-              );
-            } else {
-              onLoad(err);
-              console.log(`Loaded maintainers from: ${files[0].toString()}`);
-            }
-          });
-        } else {
-          console.error(`Failed to load ${participantsSearchPath}`);
         }
-      },
-      reason => {
-        console.error(
-          `Failed to load ${participantsSearchPath}, reason ${reason}`
-        );
       }
     );
   }
 
-  private async loadFromFile(
-    ownersUri: vscode.Uri,
-    onLoad: (err: NodeJS.ErrnoException | null) => void
-  ) {
-    fs.lstat(ownersUri.path, (err, stats) => {
-      if (err) {
-        onLoad(err);
-      } else {
-        fs.readFile(ownersUri.path, async (err, buffer) => {
-          if (err) {
-            onLoad(err);
-          } else {
-            this.loadFromYaml(buffer.toString());
-            this._root = path.parse(ownersUri.path).dir;
-            onLoad(err);
-          }
-        });
+  async load(participantsSearchPath: string): Promise<void> {
+    return vscode.workspace.findFiles(participantsSearchPath).then(
+      (files: vscode.Uri[]) => {
+        if (files.length === 0) {
+          return Promise.reject(`${participantsSearchPath} could not be found`);
+        }
+
+        return this.loadFromFile(files[0]);
       }
-    });
+    );
+  }
+
+  private async loadFromFile(ownersUri: vscode.Uri): Promise<void> {
+
+    await lstat(ownersUri.path);
+
+    return readFile(ownersUri.path)
+      .then(
+        (buffer) => {
+          this.loadFromYaml(buffer.toString());
+          this._root = path.parse(ownersUri.path).dir;
+          return Promise.resolve();
+        },
+        (reason) => { return Promise.reject(reason); }
+      );
   }
 
   findMaintainers(filepathAbs: string): FileParticipants {
