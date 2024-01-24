@@ -38,6 +38,7 @@ class FileOwners {
     return vscode.workspace.findFiles(participantsSearchPath).then(
       (files: vscode.Uri[]) => {
         if (files.length === 0) {
+          this._owners.clear();
           return Promise.reject(`${participantsSearchPath} could not be found`);
         }
 
